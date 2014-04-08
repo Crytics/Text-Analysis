@@ -1,0 +1,77 @@
+###################################
+# CBT Text Data Mining
+# ---------------------------------
+# Created by  : Adam Nguyen
+# Updated by  : Adam Nguyen
+# Created at  : 03/03/2014
+# Updated at  : 03/04/2014
+# Description : Regular Expressions
+###################################
+
+#Clear Environment
+#rm(list = ls(all = TRUE))
+
+#Names of working directory and files
+myfolder <- "C:/Users/adam.nguyen/Desktop/tm/"
+
+#Set Directory
+setInternet2(TRUE)
+Sys.setenv(language = "en")
+Sys.setenv(tz = 'UTC')
+options(max.print = 500)
+setwd(myfolder)
+source(paste(c("C:/Users/adam.nguyen/Desktop/GH/", "library.R"), collapse = "")) #Get library
+source(paste(c("C:/Users/adam.nguyen/Desktop/GH/", "break_munging.txt"), collapse = "")) #Get tools
+
+#Additional library
+library(tm)
+library(SnowballC)
+library(wordcloud)
+
+#Link to folder with text files
+txt <- system.file("text", package = "tm")
+
+#Get text
+text <- Corpus(DirSource(myfolder, encoding = "UTF-8"))#, readerControl = list(language = "lat"))
+
+#inspect(text)
+
+#Create text and examine
+Corpus(VectorSource(text))
+
+
+##Summary equivalents
+#Inspect shows full content
+#inspect(text[1])
+
+#Text Processing
+summary(text)
+ae.corpus <- text
+ae.corpus <- tm_map(ae.corpus, tolower)
+ae.corpus <- tm_map(ae.corpus, removePunctuation)
+ae.corpus <- tm_map(ae.corpus, removeNumbers)
+myStopwords <- c(stopwords('english'), "available", "via", "utf8towcs")
+ae.corpus <- tm_map(ae.corpus, removeWords, myStopwords)
+
+#Create TermMatrix
+ae.tdm <- DocumentTermMatrix(ae.corpus, control = list(minWordLength = 0))
+str(ae.tdm)
+
+#Analyze term intervals
+findFreqTerms(ae.tdm, lowfreq = 1000, highfreq = 1000)
+findAssocs(ae.tdm, 'r', .1)
+
+#Convert into matrix and write to CSV
+ae.matrix <- as.matrix(ae.tdm)
+ae.table <- table(ae.dataframe)
+write.csv(ae.table, file = "temp.csv")
+
+#Frequency Matrix
+ae.table.insp <- inspect(ae.tdm)
+ae.sorted <- rev(sort(colSums(as.matrix(ae.tdm))))
+plot(ae.sorted[1:20])
+head(ae.table.insp)
+
+#Generate WordCloud
+comparison.cloud(ae.tdm)
+commonality.cloud(ae.tdm)
