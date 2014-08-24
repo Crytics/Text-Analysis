@@ -1,24 +1,59 @@
+###########################################
+# Scraping Government Data
+# -----------------------------------------
+# Created by  : Adam Nguyen
+# Updated by  : Adam Nguyen
+# Created at  : 05/30/2014
+# Updated at  : 08/24/2014
+# Description : 13F Equity Filings
+###########################################
+#Clear Environment
+#rm(list = ls(all = TRUE))
+#update.packages(ask = FALSE, dependencies = c('Suggests'))
+
+#Quantmod
+library(quantmod)
+
+#Names of working directory and files
+myfolder <- "C:/Users/adam.nguyen/Desktop/WorkingDirectory/"
+
+#Set Directory
+setInternet2(TRUE)
+Sys.setenv(language = "en", tz = 'UTC')
+options(max.print = 2000)
+setwd(myfolder)
+source(paste(c("C:/Users/adam.nguyen/Desktop/R/GH/", "library.R"), collapse = "")) #Get library
+source(paste(c("C:/Users/adam.nguyen/Desktop/R/GH/", "break_munging.txt"), collapse = "")) #Get tools
+#save.xlsx()
+
 ###Scrap Text: http://www.r-bloggers.com/using-sentiment-analysis-to-predict-ratings-of-popular-tv-series/
 scrape_SEC <- function(url){
   require(XML)
   doc <- htmlParse(url)
   #Get HTML of URL
-  
+
   tables <- readHTMLTable(doc
-  			, stringsAsFactors = FALSE
-  			, skip.rows = c(1:3)
-  			, trim = TRUE
-  			, as.data.frame = TRUE
-  			) 
+            , stringsAsFactors = FALSE
+            , skip.rows = c(1:3)
+            , trim = TRUE
+            , as.data.frame = TRUE
+            )
   #Get tables inside URL
-  
+
   nrows <- unlist(as.character(lapply(tables, function(t) dim(t)[1])))
   #Find specific Table Format
-  
+
   data <- tables[[which.max(nrows)]]
   data <- data[, c(1, 3, 4, 5)]
-  names(data) <- c("Symbol", "CUSIP", "Value", "Shares")
-  #Rename columns
+  data[, 3] <- as.numeric(gsub(",", "", data[, 3]))
+  data[, 4] <- as.numeric(gsub(",", "", data[, 4]))
+  #Convert character datatype to numeric
+
+  data[, 5] <- round(1000 * data[, 3] / data[, 4], 2)
+  #calculate current share price
+
+  names(data) <- c("Symbol", "CUSIP", "Value", "Shares", "Price")
+  #Name columns
 
   return(data)
 }
@@ -26,3 +61,16 @@ scrape_SEC <- function(url){
 data <- scrape_SEC("http://www.sec.gov/Archives/edgar/data/1035674/000114036114021622/xslForm13F_X01/form13fInfoTable.xml")
 data2 <- scrape_SEC("http://www.sec.gov/Archives/edgar/data/1035674/000114036114007899/xslForm13F_X01/form13fInfoTable.xml")
 data3 <- scrape_SEC("http://www.sec.gov/Archives/edgar/data/1079114/000114036114021976/xslForm13F_X01/form13fInfoTable.xml")
+
+str(data)
+data[1, 1]
+
+getSymbols('AAPL')
+AAPL
+as.data.frame(tail(AAPL, 1))[4]
+#Get latest stock price
+
+
+#Total Portfolio Value
+sum(data[, 4] %*% data[, 5])
+
