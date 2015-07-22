@@ -20,17 +20,7 @@ source(paste(c("C:/Users/adam.nguyen/Desktop/R/GH/", "break_munging.txt"), colla
 library(RODBC)
 source(paste(c("C:/Users/adam.nguyen/Desktop/Data/", "user_keys.txt"), collapse = "")) #Get keys
 
-
-#Connect to DB
-myconn <- odbcConnect(dsn="Slice_SQL"
-                    , uid="Adam.Nguyen"
-                    , pwd="C2jM4cB2"
-)
-
-
 #Extract all tables within DB and put into a dataframe
-db.name <- '\'Slice_DWH_beta1.2\''
-db.name2 <- 'Slice_DWH_beta1.2'
 query <- sprintf('
 SELECT TABLE_NAME
 FROM INFORMATION_SCHEMA.TABLES
