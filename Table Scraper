@@ -1,0 +1,78 @@
+############################################
+# Database Crawler
+# ---------------------------------
+# Created by  : Adam Nguyen
+# Updated by  : Adam Nguyen
+# Created at  : 07/21/2015
+# Updated at  : xx/xx/xxxx
+# Description : Table Scraping
+#############################################
+
+#Set Directory
+setInternet2(TRUE)
+Sys.setenv(language = "en", tz = 'UTC')
+options(max.print = 500)
+setwd("C:/Users/adam.nguyen/Desktop/Data/")
+source(paste(c("C:/Users/adam.nguyen/Desktop/R/GH/", "library.R"), collapse = "")) #Get library
+source(paste(c("C:/Users/adam.nguyen/Desktop/R/GH/", "break_munging.txt"), collapse = "")) #Get tools
+
+#Run packages
+library(RODBC)
+source(paste(c("C:/Users/adam.nguyen/Desktop/Data/", "user_keys.txt"), collapse = "")) #Get keys
+
+
+#Connect to DB
+myconn <- odbcConnect(dsn="Slice_SQL"
+                    , uid="Adam.Nguyen"
+                    , pwd="C2jM4cB2"
+)
+
+
+#Extract all tables within DB and put into a dataframe
+db.name <- '\'Slice_DWH_beta1.2\''
+db.name2 <- 'Slice_DWH_beta1.2'
+query <- sprintf('
+SELECT TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_TYPE = \'BASE TABLE\' AND TABLE_CATALOG = %s
+ORDER BY TABLE_NAME
+', db.name)
+data.raw <- sqlQuery(myconn, query)
+data.chr <- as.character(data.raw[, 1])
+
+
+#Create folder and set working directory
+mainDir <- getwd()
+subDir <- "OutputDirectory"
+if (file.exists(paste(mainDir, subDir, "/", sep = "/", collapse = "/"))) {
+    cat("subDir exists in mainDir and is a directory")
+} else if (file.exists(paste(mainDir, subDir, sep = "/", collapse = "/"))) {
+    cat("subDir exists in mainDir but is a file")
+    # you will probably want to handle this separately
+} else {
+    cat("subDir does not exist in mainDir - creating")
+    dir.create(file.path(mainDir, subDir))
+}
+if (file.exists(paste(mainDir, subDir, "/", sep = "/", collapse = "/"))) {
+    # By this point, the directory either existed or has been successfully created
+    setwd(file.path(mainDir, subDir))
+} else {
+    cat("subDir does not exist")
+    # Handle this error as appropriate
+}
+setwd(paste(mainDir, subDir, "/", sep = "/", collapse = "/"))
+
+#Query top 5 with header from a variable table and save to folder
+storage <- list()
+for (i in 1:length(data.chr)){
+    query <- sprintf('select top 5 * from %s', paste0('[', db.name2, '].dbo.', data.chr[i]))
+    result <- sqlQuery(myconn, query)
+    storage[[i]] <- result
+    write.csv(storage[[i]], sprintf('%s.csv', data.chr[i]))
+}
+
+
+#Write list into a file ##function cannot read lists!!
+dataframes2xls::write.xls(storage
+        , "dataframes2xls.xls"
+        )
